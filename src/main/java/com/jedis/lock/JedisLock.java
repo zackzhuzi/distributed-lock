@@ -1,9 +1,6 @@
 package com.jedis.lock;
 
-import java.io.InputStream;
-import java.util.Properties;
-
-import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
 
 /**
  * Jedis实现分布式锁
@@ -12,48 +9,41 @@ import redis.clients.jedis.Jedis;
  *
  */
 public class JedisLock {
-    private static final String REDISCONFIGFILE = "redis.properties";
+	private static final String PREFIX = "redis.lock.";
 
-    // 超时时间:默认30s
-    private int waitTimeOut = 30;
-    // 锁的过期时间：默认1分钟
-    private int lockExpireTime = 60;
+	// 超时时间:默认30s
+	private int waitTimeOut = 30;
+	// 锁的过期时间：默认1分钟
+	private int lockExpireTime = 60;
+	// 锁的名字
+	private String lockName;
 
-    private static Jedis jedis;
+	private JedisPool jedisPool;
 
-    static {
-        try {
-            Properties pps = new Properties();
-            InputStream inputStream = JedisLock.class.getClassLoader()
-                    .getResourceAsStream(REDISCONFIGFILE);
-            pps.load(inputStream);
-            String host = pps.getProperty("redis.host");
-            int port = Integer.parseInt(pps.getProperty("redis.port"));
-            jedis = new Jedis(host, port);
-        } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } finally {
+	public JedisLock(String lockName) {
+		this.lockName = PREFIX + lockName;
+	}
 
-        }
+	public JedisLock(String lockName, int waitTimeOut, int lockExpireTime) {
+		this.lockName = lockName;
+		this.waitTimeOut = waitTimeOut;
+		this.lockExpireTime = lockExpireTime;
+	}
 
-        // TODO
-        // connect
-    }
+	public JedisLock(JedisPool jedisPool, String lockName, int waitTimeOut,
+			int lockExpireTime) {
+		this.jedisPool = jedisPool;
+		this.lockName = PREFIX + lockName;
+		this.waitTimeOut = waitTimeOut;
+		this.lockExpireTime = lockExpireTime;
+	}
 
-    // 等待间隔：默认
-
-    public JedisLock() {
-        // TODO Auto-generated constructor stub
-    }
-
-    public JedisLock(String lockName, int waitTimeOut, int lockExpireTime) {
-        // TODO Auto-generated constructor stub
-    }
-
-    public JedisLock(String host, String password, int port, String lockName,
-            int waitTimeOut, int lockExpireTime) {
-        // TODO Auto-generated constructor stub
-    }
-
+	public static void main(String[] args) {
+		try {
+			JedisPool jedisPool2 = JedisPoolFactory.getJedisPool();
+			JedisPoolFactory.poolTest(jedisPool2);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 }
