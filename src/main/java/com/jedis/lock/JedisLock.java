@@ -9,41 +9,71 @@ import redis.clients.jedis.JedisPool;
  *
  */
 public class JedisLock {
-	private static final String PREFIX = "redis.lock.";
+    private static final String PREFIX = "redis.lock.";
 
-	// 超时时间:默认30s
-	private int waitTimeOut = 30;
-	// 锁的过期时间：默认1分钟
-	private int lockExpireTime = 60;
-	// 锁的名字
-	private String lockName;
+    // 超时时间:默认30s
+    private int waitTimeOut = 30;
+    // 锁的过期时间：默认1分钟
+    private int lockExpireTime = 60;
+    // 锁的名字
+    private String lockName;
 
-	private JedisPool jedisPool;
+    private JedisPool jedisPool;
 
-	public JedisLock(String lockName) {
-		this.lockName = PREFIX + lockName;
-	}
+    public JedisLock(String lockName) {
+        this.setLockName(lockName);
+    }
 
-	public JedisLock(String lockName, int waitTimeOut, int lockExpireTime) {
-		this.lockName = lockName;
-		this.waitTimeOut = waitTimeOut;
-		this.lockExpireTime = lockExpireTime;
-	}
+    public JedisLock(String lockName, int waitTimeOut, int lockExpireTime) {
+        this.setLockName(lockName);
+        this.waitTimeOut = waitTimeOut;
+        this.lockExpireTime = lockExpireTime;
+    }
 
-	public JedisLock(JedisPool jedisPool, String lockName, int waitTimeOut,
-			int lockExpireTime) {
-		this.jedisPool = jedisPool;
-		this.lockName = PREFIX + lockName;
-		this.waitTimeOut = waitTimeOut;
-		this.lockExpireTime = lockExpireTime;
-	}
+    public JedisLock(JedisPool jedisPool, String lockName, int waitTimeOut,
+            int lockExpireTime) {
+        this.jedisPool = jedisPool;
+        this.setLockName(lockName);
+        this.waitTimeOut = waitTimeOut;
+        this.lockExpireTime = lockExpireTime;
+    }
 
-	public static void main(String[] args) {
-		try {
-			JedisPool jedisPool2 = JedisPoolFactory.getJedisPool();
-			JedisPoolFactory.poolTest(jedisPool2);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
+    public JedisPool getJedisPool() {
+        if (jedisPool == null) {
+            synchronized (this) {
+                if (jedisPool == null) {
+                    jedisPool = JedisPoolFactory.getJedisPool();
+                }
+            }
+        }
+        return jedisPool;
+    }
+
+    /**
+     * 获取锁
+     * 
+     * @return
+     * @author yuzhu.peng
+     * @since 2016年6月12日
+     */
+    public boolean lock() {
+
+        return true;
+    }
+
+    /**
+     * 释放锁
+     * 
+     * @return
+     * @author yuzhu.peng
+     * @since 2016年6月12日
+     */
+    public boolean unLock() {
+
+        return true;
+    }
+
+    public void setLockName(String lockName) {
+        this.lockName = PREFIX + lockName;
+    }
 }
