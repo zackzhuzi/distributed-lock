@@ -88,11 +88,13 @@ public class JedisPoolFactory {
                         System.out.println(Thread.currentThread().getName()
                                 + " test" + inx + "=" + jedis.get("test" + inx));
                     } catch (Exception e) {
-                        needReturn = false;
-                        jedisPool.returnBrokenResource(jedis);
+                        if (jedis != null) {
+                            needReturn = false;
+                            jedisPool.returnBrokenResource(jedis);
+                        }
                         e.printStackTrace();
                     } finally {
-                        if (needReturn && jedisPool != null) {
+                        if (needReturn && jedis != null) {
                             jedisPool.returnResource(jedis);
                         }
                     }
