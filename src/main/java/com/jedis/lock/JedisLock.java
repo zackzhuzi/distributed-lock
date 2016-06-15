@@ -1,14 +1,9 @@
 package com.jedis.lock;
 
-import java.util.List;
 import java.util.UUID;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.Transaction;
 
 /**
  * Jedis实现分布式锁
@@ -17,8 +12,6 @@ import redis.clients.jedis.Transaction;
  *
  */
 public class JedisLock {
-    private static final Logger LOGGER = LoggerFactory
-            .getLogger(JedisLock.class);
     private static final String PREFIX = "redis.lock.";
 
     private static final int waitInterVal = 1000; // 获取锁失败睡眠周期
@@ -31,16 +24,40 @@ public class JedisLock {
 
     private JedisPool jedisPool;
 
+    /**
+     * 初始化参数
+     * 
+     * @param lockName
+     */
     public JedisLock(String lockName) {
         this.setLockName(lockName);
     }
 
+    /**
+     * 初始化参数
+     * 
+     * @param lockName
+     * @param waitTimeOut
+     *            :seconds
+     * @param lockExpireTime
+     *            :seconds
+     */
     public JedisLock(String lockName, int waitTimeOut, int lockExpireTime) {
         this.setLockName(lockName);
         this.waitTimeOut = waitTimeOut;
         this.lockExpireTime = lockExpireTime;
     }
 
+    /**
+     * 初始化参数
+     * 
+     * @param jedisPool
+     * @param lockName
+     * @param waitTimeOut
+     *            :seconds
+     * @param lockExpireTime
+     *            :seconds
+     */
     public JedisLock(JedisPool jedisPool, String lockName, int waitTimeOut,
             int lockExpireTime) {
         this.jedisPool = jedisPool;
@@ -82,6 +99,7 @@ public class JedisLock {
                 if (jedis.setnx(lockName, uuid) > 0) {
                     jedis.expire(lockName, lockExpireTime);
                     result = true;
+                    break;
                 }
 
                 // ttl=-1 说明key存在，但是没有过期时间。原因是：上次setNx成功后，程序crash，但是没有执行expire
@@ -89,12 +107,13 @@ public class JedisLock {
                 if (jedis.ttl(lockName) == -1) {
                     jedis.expire(lockName, lockExpireTime);
                     result = true;
+                    break;
                 }
 
                 try {
                     Thread.sleep(waitInterVal);
                 } catch (InterruptedException e) {
-                    LOGGER.error("thread sleep exception", e);
+                    e.printStackTrace();
                     Thread.currentThread().interrupt();
                 }
             }
@@ -103,7 +122,7 @@ public class JedisLock {
                 needReturn = false;
                 jedisPool.returnBrokenResource(jedis);
             }
-            LOGGER.error(e.getMessage(), e);
+            e.printStackTrace();
         } finally {
             if (jedis != null && needReturn) {
                 jedisPool.returnResource(jedis);
@@ -132,18 +151,14 @@ public class JedisLock {
             while (retryTimes > 0) {
                 // 假如某个key 正处于 WATCH 命令的监视之下，且事务块中有和这个key相关的命令，那么EXEC
                 // 命令只在这个key没有被其他命令所改动的情况下执行并生效，否则该事务被打断(abort)。
-                jedis.watch(lockName);
                 if (jedis.exists(lockName)) {
-                    Transaction trans = jedis.multi();
-                    jedis.del(lockName);
-                    List<Object> transResult = trans.exec();
-                    if (transResult == null) {
+                    Long del = jedis.del(lockName);
+                    if (del < 1) {
                         retryTimes--;
                         continue;
                     }
                     result = true;
                 }
-                jedis.unwatch();
                 break;
             }
         } catch (Exception e) {
@@ -151,7 +166,7 @@ public class JedisLock {
                 needReturn = false;
                 jedisPool.returnBrokenResource(jedis);
             }
-            LOGGER.error(e.getMessage(), e);
+            e.printStackTrace();
         } finally {
             if (jedis != null && needReturn) {
                 jedisPool.returnResource(jedis);
@@ -162,5 +177,9 @@ public class JedisLock {
 
     public void setLockName(String lockName) {
         this.lockName = PREFIX + lockName;
+    }
+
+    public String getLockName() {
+        return this.lockName;
     }
 }
