@@ -1,1 +1,1 @@
-creating a distributed lock by redis
+creating a distributed lock by redis.
