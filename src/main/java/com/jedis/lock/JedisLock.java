@@ -178,8 +178,4 @@ public class JedisLock {
     public void setLockName(String lockName) {
         this.lockName = PREFIX + lockName;
     }
-
-    public String getLockName() {
-        return this.lockName;
-    }
 }

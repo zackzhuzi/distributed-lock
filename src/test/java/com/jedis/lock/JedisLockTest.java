@@ -47,18 +47,18 @@ public class JedisLockTest {
 
     class JedisLockThread extends TestRunnable {
         @Override
-        public void runTest() throws Throwable {
+        public void runTest() {
             JedisLock jedisLock = new JedisLock(jedisPool, lockName, 5, 86400);
             boolean tryLock = false;
             try {
                 tryLock = jedisLock.tryLock();
                 if (tryLock) {
                     System.out.println(Thread.currentThread().getName()
-                            + "|lock success|" + jedisLock.getLockName());
+                            + "|lock success|" + lockName);
                     count--;
                 } else {
                     System.out.println(Thread.currentThread().getName()
-                            + "|lock failed|" + jedisLock.getLockName());
+                            + "|lock failed|" + lockName);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -66,10 +66,10 @@ public class JedisLockTest {
                 if (tryLock) {
                     if (jedisLock.unLock()) {
                         System.out.println(Thread.currentThread().getName()
-                                + "|unlock success|" + jedisLock.getLockName());
+                                + "|unlock success|" + lockName);
                     } else {
                         System.out.println(Thread.currentThread().getName()
-                                + "|unlock failed|" + jedisLock.getLockName());
+                                + "|unlock failed|" + lockName);
                     }
                 }
             }
